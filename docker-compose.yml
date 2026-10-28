@@ -1,0 +1,30 @@
+name: aquist-playground
+
+services:
+  # The built app, for everyone on the network: http://<host>:8080
+  playground:
+    build: .
+    image: aquist-playground:latest
+    ports:
+      - "${AQUIST_PORT:-8080}:8080"
+    environment:
+      NGINX_ENTRYPOINT_QUIET_LOGS: "1"
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+  # Vite with hot reload on the mounted sources, only on this machine:
+  #   docker compose --profile dev up --build -V dev
+  # (-V gives node_modules fresh from the image after package.json changed.)
+  dev:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    image: aquist-playground:dev
+    ports:
+      - "127.0.0.1:${AQUIST_DEV_PORT:-5180}:5180"
+    volumes:
+      - .:/app
+      - /app/node_modules
